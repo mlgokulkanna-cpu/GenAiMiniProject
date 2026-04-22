@@ -1,0 +1,35 @@
+# --- API Keys & Secrets ---
+.env
+.env.local
+.env.*.local
+
+# --- Python & Environments ---
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+*$py.class
+
+# --- Google ADK & Execution ---
+.adk/
+artifacts/
+logs/
+*.log
+
+# --- IDEs & Editors ---
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# --- OS Specific ---
+.DS_Store
+Thumbs.db
+
+# --- Project Specific Data ---
+# Exclude raw data files if they are large, but keep the code
+*.json
+*.csv
+# If you want to keep specific config files, use an exclamation:
+# !config.json
