@@ -18,6 +18,7 @@ import os
 import requests
 from dotenv import load_dotenv
 from google.adk.agents import Agent
+from google.adk.tools import google_search
 
 load_dotenv()
 
@@ -247,12 +248,11 @@ def _save_search_results_to_rag(result: dict, source: str) -> None:
 # ---------------------------------------------------------------------------
 researcher = Agent(
     name="Researcher",
-    model="gemini-2.5-flash",
+    model="gemini-3-flash",
     tools=[
         search_business_reviews,
-        search_top_businesses,
         search_news_and_alerts,
-        save_to_knowledge_base,
+        search_top_businesses,
     ],
     instruction="""
     You are a Business Data Investigator specialising in gathering raw intelligence.
@@ -284,33 +284,28 @@ researcher = Agent(
 # ---------------------------------------------------------------------------
 analyst = Agent(
     name="Analyst",
-    model="gemini-2.5-flash",
-    tools=[
-        retrieve_documents,
-    ],
+    model="gemini-3-flash",
     instruction="""
-    You are a Sentiment & Data Expert with access to a knowledge base of
-    business reviews, past research, and indexed documents.
+    You are a Sentiment & Data Expert.
+    1. Calculate the Positive vs Negative ratio based on the last 6 months of data.
+    2. Extract common themes (e.g., 'long wait times', 'parking issues').
+    3. If multiple businesses are provided, create a comparison table.
+    """
+)
 
-    ### WORKFLOW
-    1. **FIRST**, call `retrieve_documents` with a relevant query to pull
-       context from the knowledge base (e.g. "McDonald's parking complaints",
-       "Starbucks Chicago reviews").
-    2. **THEN**, combine the retrieved context with the Researcher's data
-       to produce a comprehensive, citation-backed report.
-    3. If retrieved documents contain relevant historical data, reference
-       them in your analysis (e.g. "According to indexed review data...").
-
-    ### ANALYSIS TASKS
-    1. **Sentiment ratio**: Estimate Positive vs Negative % from available data.
-    2. **Theme extraction**: Identify recurring topics (e.g. "long wait times",
-       "parking issues", "rude staff", "great food").
-    3. **Safety & News Alerts**: Highlight any health violations, safety issues,
-       or negative press. State "No major alerts found" if clean.
-    4. **Multi-business comparison**: If multiple businesses provided, build a
-       Markdown comparison table with columns:
-       Business | Rating | P/N Ratio | Top Pros | Top Cons | Safety Alerts.
-    5. **Final Verdict**: One concise recommendation sentence.
+# --- ROOT AGENT: THE MANAGER (YOUR MAIN INSTRUCTION) ---
+root_agent = Agent(
+    name="BusinessIntelManager",
+    model="gemini-3-flash",
+    sub_agents=[researcher, analyst],
+    instruction="""
+    You are a professional Business Intelligence Analyst Orchestrator. 
+    
+    ### CORE LOGIC:
+    - **Address Provided:** Extract business name and location. Task 'Researcher' to gather data and 'Analyst' to summarize.
+    - **Name Only:** Stop and ask for the city or area. DO NOT assume the location or give a generalized summary.
+    - **Location/City Only:** Ask for business types (e.g., "restaurants"). Once provided, find the top 5, compare them, and suggest the best one.
+    - **Specific Aspect (e.g., Parking):** Tell 'Researcher' to focus search parameters on that specific keyword.
 
     ### REPORT FORMAT
     Format your output EXACTLY as:
