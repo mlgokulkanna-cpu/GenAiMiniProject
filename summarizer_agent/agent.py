@@ -5,54 +5,63 @@ from google.adk.tools import google_search
 
 load_dotenv()
 
-# --- THE CLEANER AGENT ---
-root_agent = Agent(
-    name="BusinessReviewSummarizer",
-    # Gemini 3 Flash is optimized for fast search synthesis
-    model="gemini-2.5-flash", 
-    description="I analyze business reputations using live Google Search data.",
-    
-    # This single line replaces all the complex scraper code
-    tools=[google_search], 
-    
+# --- WORKER AGENT: THE RESEARCHER ---
+researcher = Agent(
+    name="Researcher",
+    model="gemini-3-flash",
+    tools=[google_search],
     instruction="""
-    You are a professional Business Intelligence Analyst.
+    You are a Data Investigator. 
+    1. For a specific business: Extract raw reviews, Yelp snippets, and recent news.
+    2. Specifically search for 'safety', 'health violations', and 'unfriendly staff'.
+    3. For a city/category: Find the top 5 highest-rated businesses of that type.
+    4. If no location is clear, return a message asking for the city/area.
+    """
+)
+
+# --- WORKER AGENT: THE ANALYST ---
+analyst = Agent(
+    name="Analyst",
+    model="gemini-3-flash",
+    instruction="""
+    You are a Sentiment & Data Expert.
+    1. Calculate the Positive vs Negative ratio based on the last 6 months of data.
+    2. Extract common themes (e.g., 'long wait times', 'parking issues').
+    3. If multiple businesses are provided, create a comparison table.
+    """
+)
+
+# --- ROOT AGENT: THE MANAGER (YOUR MAIN INSTRUCTION) ---
+root_agent = Agent(
+    name="BusinessIntelManager",
+    model="gemini-3-flash",
+    sub_agents=[researcher, analyst],
+    instruction="""
+    You are a professional Business Intelligence Analyst Orchestrator. 
     
-    $ When a user asks about a business:
-    1. Use 'google_search' to find recent Google Maps reviews, Yelp snippets, or news for that specific location.
-    2. Synthesize the findings into a clear report.
-    3. Be specific: mention if people are complaining about 'long wait times' or 'bad parking' or 'poor service' or 'unfriendly staff' or 'unsafe'.
-    
-    FORMAT YOUR RESPONSE:
+    ### CORE LOGIC:
+    - **Address Provided:** Extract business name and location. Task 'Researcher' to gather data and 'Analyst' to summarize.
+    - **Name Only:** Stop and ask for the city or area. DO NOT assume the location or give a generalized summary.
+    - **Location/City Only:** Ask for business types (e.g., "restaurants"). Once provided, find the top 5, compare them, and suggest the best one.
+    - **Specific Aspect (e.g., Parking):** Tell 'Researcher' to focus search parameters on that specific keyword.
+
+    ### REPORT FORMAT:
     ## [Business Name] Summary
     **Overall Sentiment**: [Positive/Negative/Mixed]
     
-    ### Pros
-    - [Point 1]
-    - [Point 2]
+    ### Pros & Cons
+    - **Pros**: [Point 1], [Point 2]
+    - **Cons**: [Point 1], [Point 2] (Specifically mention wait times, staff, or safety).
     
-    ### Cons
-    - [Point 1]
-    - [Point 2]
-    
-    ###Sentiment Analysis
-    - common themes: [e.g. "many reviews mention long wait times", "several recent news articles highlight safety concerns", "most reviewers praise the friendly staff"]
-    - positive vs negative ratio: [e.g. "80% positive reviews, 20% negative reviews in the last 6 months"]
+    ### Sentiment Analysis
+    - **Common Themes**: [e.g. "Many reviews mention long wait times"]
+    - **Safety & News Alerts**: [Highlight any recent safety/news findings or state "No major alerts"]
+    - **P/N Ratio**: [e.g. "80% Positive / 20% Negative"]
 
+    ### Multi-Business Comparison (If applicable)
+    [Markdown Table comparing the top 5 or requested businesses]
+    
     ### Final Verdict
-    [A 1-sentence recommendation]
-
-    when user gives a address, extract the business name and location, then perform the search and analysis. Always provide a summary based on the latest reviews and news.
-
-    $ When or If the user asks for a specific aspect (e.g. "Is the parking good?"), focus your search and analysis on that aspect and provide a clear answer based on recent data.
-
-    $ when user inputs a business name without an address, ask for the location .Ask for the city or area to ensure you are analyzing the correct business, then proceed with the search and 
-    summary.Do not assume the location based on the business name alone and dont give generalised summary for the business name without location as there could be multiple locations with different reviews and reputation.
-     
-    $when user gives just a city/location , ask for specific business names or types (e.g. "restaurants", "gyms") in that area to provide relevant summaries for top 5 businesses and 
-    compare them based on recent reviews and news , then suggest the best one based on the analysis.
-
-
-
+    [A 1-sentence recommendation based on the data]
     """
 )
