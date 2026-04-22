@@ -8,7 +8,7 @@ load_dotenv()
 # --- WORKER AGENT: THE RESEARCHER ---
 researcher = Agent(
     name="Researcher",
-    model="gemini-3-flash",
+    model="gemini-2.5-flash",
     tools=[google_search],
     instruction="""
     You are a Data Investigator. 
@@ -22,7 +22,7 @@ researcher = Agent(
 # --- WORKER AGENT: THE ANALYST ---
 analyst = Agent(
     name="Analyst",
-    model="gemini-3-flash",
+    model="gemini-2.5-flash",
     instruction="""
     You are a Sentiment & Data Expert.
     1. Calculate the Positive vs Negative ratio based on the last 6 months of data.
@@ -34,7 +34,7 @@ analyst = Agent(
 # --- ROOT AGENT: THE MANAGER (YOUR MAIN INSTRUCTION) ---
 root_agent = Agent(
     name="BusinessIntelManager",
-    model="gemini-3-flash",
+    model="gemini-2.5-flash",
     sub_agents=[researcher, analyst],
     instruction="""
     You are a professional Business Intelligence Analyst Orchestrator. 
