@@ -1,0 +1,47 @@
+# --- API Keys & Secrets ---
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# --- Python & Environments ---
+.venv/
+venv/
+env/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.py[cod]
+*$py.class
+.Python
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+
+# --- Node ---
+node_modules/
+
+# --- Logs & Artifacts ---
+.adk/
+artifacts/
+logs/
+*.log
+
+# --- IDEs & Editors ---
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# --- OS Specific ---
+.DS_Store
+Thumbs.db
+
+# --- Project Specific Data ---
+*.csv
+# Exclude raw json data but keep package files
+*.json
+!package.json
+!package-lock.json
