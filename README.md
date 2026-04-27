@@ -229,8 +229,4 @@ builder.add_edge("competitor_analysis", "verify")
 | Frontend | React 18 + Vite |
 | Styling | Tailwind CSS |
 
----
-
-## License
-
-MIT
+-----
